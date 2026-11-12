@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KRYPTO LENS</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<style>
+:root{--bg:#070d1a;--panel:#0f1a2e;--line:#1e2d4a;--text:#e6edf7;--muted:#8fa3c0;--cyan:#22d3ee;--green:#34d399;--amber:#fbbf24;--red:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,textarea{font:inherit}
+nav{position:sticky;top:0;z-index:5;display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:12px 24px;background:#070d1aee;border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.logo{font-weight:800;font-size:18px;margin-right:auto;color:var(--cyan)}
+nav button{background:none;border:0;color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer}
+nav button:hover,nav button.on{color:var(--text);background:var(--panel)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.hero{min-height:78vh;display:grid;place-items:center;text-align:center;padding:40px 24px;
+background:linear-gradient(180deg,#070d1acc,#070d1af2),url(https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=70) center/cover,radial-gradient(circle at 50% 30%,#0e3b4f,#070d1a)}
+.hero h1{font-size:clamp(34px,6vw,64px);margin:0 0 12px;line-height:1.1}
+.hero p{max-width:620px;margin:0 auto 26px;color:var(--muted);font-size:18px}
+.btn{background:var(--cyan);color:#04202a;border:0;padding:11px 20px;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.alt{background:transparent;color:var(--text);border:1px solid var(--line);margin-left:10px}
+.btn:disabled{opacity:.5;cursor:wait}
+main{max-width:1100px;margin:0 auto;padding:28px 20px 60px}
+h2{margin:0 0 4px;font-size:26px}.sub{color:var(--muted);margin:0 0 22px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h3{margin:0 0 6px;font-size:16px}.card p{margin:0;color:var(--muted)}
+.feat{cursor:pointer;transition:border-color .15s}.feat:hover{border-color:var(--cyan)}
+input,textarea{width:100%;background:#0a1324;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:8px 0 12px}
+textarea{min-height:150px;resize:vertical}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{background:var(--panel);color:var(--muted);border:1px solid var(--line);padding:8px 14px;border-radius:999px;cursor:pointer}
+.tabs button.on{color:#04202a;background:var(--cyan);border-color:var(--cyan)}
+.bar{height:10px;background:#0a1324;border-radius:99px;overflow:hidden;margin:10px 0}.bar i{display:block;height:100%;transition:width .5s}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.Safe,.Strong{background:#34d39922;color:var(--green)}.Suspicious,.Medium{background:#fbbf2422;color:var(--amber)}.Dangerous,.Weak{background:#f8717122;color:var(--red)}
+ul.fl{margin:8px 0 0;padding-left:18px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:14px}
+th{color:var(--muted);font-weight:600}td.in{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ring{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;margin:6px auto}
+.ring div{width:114px;height:114px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-size:36px;font-weight:800}
+.stat{font-size:30px;font-weight:800}.two{display:grid;gap:16px;grid-template-columns:1fr 2fr}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--muted)}
+.alert{padding:10px 0;border-bottom:1px solid var(--line)}.err{color:var(--red)}.ok{color:var(--green)}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+const api = async (p, body) => {
+  try {
+    const response = await fetch('/api/' + p, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      ...(body ? { body: JSON.stringify(body) } : {})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  } catch (error) {
+    return { error: error.message || 'Network error' };
+  }
+};
+const color = s => s >= 60 ? 'var(--red)' : s >= 30 ? 'var(--amber)' : 'var(--green)';
+
+const ago = d => new Date(d).toLocaleString();
+const I18N = {
+ en:{Home:'Home',Dashboard:'Dashboard','Threat Scanner':'Threat Scanner','QR Analyzer':'QR Analyzer',Password:'Password','IP Lookup':'IP Lookup',Report:'Report',Awareness:'Awareness','Threat scanner':'Threat scanner','Scan now':'Scan now','Scanning…':'Scanning…','Security dashboard':'Security dashboard','Security score':'Security score','Recent alerts':'Recent alerts','Scan history':'Scan history','Password strength':'Password strength','IP lookup':'IP lookup','Look up':'Look up','Report a threat':'Report a threat','Send report':'Send report','Cyber awareness':'Cyber awareness','Open dashboard':'Open dashboard','Scan a link':'Scan a link','Safe':'Safe','Suspicious':'Suspicious','Dangerous':'Dangerous','Play':'Play','Pause':'Pause','Stop':'Stop','Voice guidance':'Voice guidance','Download PDF report':'Download PDF report','Upload QR image':'Upload QR image','Start camera scan':'Start camera scan','Stop camera':'Stop camera','Analyze QR':'Analyze QR','Enable voice assistance':'Enable voice assistance','Ask by voice':'Ask by voice','Listen':'Listen'},
+ hi:{Home:'होम',Dashboard:'डैशबोर्ड','Threat Scanner':'खतरा स्कैनर','QR Analyzer':'QR विश्लेषक',Password:'पासवर्ड','IP Lookup':'IP लुकअप',Report:'रिपोर्ट',Awareness:'जागरूकता','Threat scanner':'खतरा स्कैनर','Scan now':'अभी स्कैन करें','Scanning…':'स्कैन हो रहा है…','Security dashboard':'सुरक्षा डैशबोर्ड','Security score':'सुरक्षा स्कोर','Recent alerts':'हाल के अलर्ट','Scan history':'स्कैन इतिहास','Password strength':'पासवर्ड की मजबूती','IP lookup':'IP लुकअप','Look up':'खोजें','Report a threat':'खतरे की रिपोर्ट करें','Send report':'रिपोर्ट भेजें','Cyber awareness':'साइबर जागरूकता','Open dashboard':'डैशबोर्ड खोलें','Scan a link':'लिंक स्कैन करें','Safe':'सुरक्षित','Suspicious':'संदिग्ध','Dangerous':'खतरनाक','Play':'चलाएं','Pause':'रोकें','Stop':'बंद करें','Voice guidance':'आवाज़ मार्गदर्शन','Download PDF report':'PDF रिपोर्ट डाउनलोड करें','Upload QR image':'QR छवि अपलोड करें','Start camera scan':'कैमरा स्कैन शुरू करें','Stop camera':'कैमरा बंद करें','Analyze QR':'QR का विश्लेषण करें','Enable voice assistance':'आवाज़ सहायता सक्षम करें','Ask by voice':'आवाज़ से पूछें','Listen':'सुनें'},
+ kn:{Home:'ಮುಖಪುಟ',Dashboard:'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್','Threat Scanner':'ಅಪಾಯ ಸ್ಕ್ಯಾನರ್','QR Analyzer':'QR ವಿಶ್ಲೇಷಕ',Password:'ಪಾಸ್‌ವರ್ಡ್','IP Lookup':'IP ಹುಡುಕಾಟ',Report:'ವರದಿ',Awareness:'ಜಾಗೃತಿ','Threat scanner':'ಅಪಾಯ ಸ್ಕ್ಯಾನರ್','Scan now':'ಈಗ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ','Scanning…':'ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿದೆ…','Security dashboard':'ಭದ್ರತಾ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್','Security score':'ಭದ್ರತಾ ಅಂಕ','Recent alerts':'ಇತ್ತೀಚಿನ ಎಚ್ಚರಿಕೆಗಳು','Scan history':'ಸ್ಕ್ಯಾನ್ ಇತಿಹಾಸ','Password strength':'ಪಾಸ್‌ವರ್ಡ್ ಸಾಮರ್ಥ್ಯ','IP lookup':'IP ಹುಡುಕಾಟ','Look up':'ಹುಡುಕಿ','Report a threat':'ಅಪಾಯ ವರದಿ ಮಾಡಿ','Send report':'ವರದಿ ಕಳುಹಿಸಿ','Cyber awareness':'ಸೈಬರ್ ಜಾಗೃತಿ','Open dashboard':'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ','Scan a link':'ಲಿಂಕ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ','Safe':'ಸುರಕ್ಷಿತ','Suspicious':'ಸಂದೇಹಾಸ್ಪದ','Dangerous':'ಅಪಾಯಕಾರಿ','Play':'ಚಲಾಯಿಸಿ','Pause':'ವಿರಾಮ','Stop':'ನಿಲ್ಲಿಸಿ','Voice guidance':'ಧ್ವನಿ ಮಾರ್ಗದರ್ಶನ','Download PDF report':'PDF ವರದಿ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ','Upload QR image':'QR ಚಿತ್ರ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ','Start camera scan':'ಕ್ಯಾಮೆರಾ ಸ್ಕ್ಯಾನ್ ಪ್ರಾರಂಭಿಸಿ','Stop camera':'ಕ್ಯಾಮೆರಾ ನಿಲ್ಲಿಸಿ','Analyze QR':'QR ವಿಶ್ಲೇಷಿಸಿ','Enable voice assistance':'ಧ್ವನಿ ಸಹಾಯ ಸಕ್ರಿಯಗೊಳಿಸಿ','Ask by voice':'ಧ್ವನಿಯಿಂದ ಕೇಳಿ','Listen':'ಕೇಳಿ'}
+};
+let currentLang='en', voiceEnabled=true, activeUtterance=null, lastScanResult=null;
+const langLocale={en:'en-US',hi:'hi-IN',kn:'kn-IN'};
+function speakText(text, mode='play'){
+ if(!('speechSynthesis' in window)){alert('Text-to-Speech is not supported in this browser.');return;}
+ if(mode==='pause'){speechSynthesis.pause();return;} if(mode==='stop'){speechSynthesis.cancel();return;}
+ speechSynthesis.cancel(); activeUtterance=new SpeechSynthesisUtterance(text);
+ activeUtterance.lang=langLocale[currentLang]||'en-US'; speechSynthesis.speak(activeUtterance);
+}
+function translatePage(){
+ const dict=I18N[currentLang]||I18N.en;
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+ let node; while((node=walker.nextNode())){
+   if(!node.parentElement || ['SCRIPT','STYLE','TEXTAREA'].includes(node.parentElement.tagName)) continue;
+   if(!node.dataset.krOriginal) node.dataset.krOriginal=node.nodeValue;
+   const original=node.dataset.krOriginal.trim();
+   if(dict[original]) node.nodeValue=node.nodeValue.replace(original,dict[original]);
+ }
+ document.documentElement.lang=currentLang;
+}
+function setLanguage(lang){currentLang=lang;translatePage();}
+const translationObserver=new MutationObserver(()=>translatePage());
+translationObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
+
+
+const PAGES = [['home','Home'],['dashboard','Dashboard'],['scanner','Threat Scanner'],['qr','QR Analyzer'],['password','Password'],['ip','IP Lookup'],['report','Report'],['awareness','Awareness']];
+
+function Result({ r, strength }) {
+  if (!r) return null;
+  if (r.error) return <p className="err">{r.error}</p>;
+  const c = strength ? color(100 - r.score) : color(r.score);
+  return (
+    <div className="card" style={{ marginTop: 16 }}>
+      <span className={'pill ' + r.verdict}>{r.verdict}</span>{' '}
+      <b>{strength ? `Strength ${r.score}/100` : `Risk ${r.score}/100`}</b>
+      {r.entropy !== undefined && <span style={{ color: 'var(--muted)' }}> · {r.entropy} bits entropy</span>}
+      <div className="bar"><i style={{ width: r.score + '%', background: c }} /></div>
+      <ul className="fl">{(r.flags || []).map((f, i) => <li key={i}>{f}</li>)}</ul>
+      <p style={{color:'var(--muted)',marginTop:10}}>{r.explanation || 'Review each indicator before interacting with this content.'}</p>
+      <p><b>Recommended action:</b> {r.verdict==='Safe'?'Still verify the sender and destination.': 'Do not open the link or share passwords, OTPs or payment details. Verify through the official website or app.'}</p>
+      <div className="tabs"><button onClick={()=>speakText(`${r.verdict}. Risk score ${r.score} out of 100. ${(r.flags||[]).join('. ')}. ${r.verdict==='Safe'?'Continue to stay alert.':'Do not open this link. Verify using the official website.'}`)}>▶ Play</button><button onClick={()=>speakText('', 'pause')}>Ⅱ Pause</button><button onClick={()=>speakText('', 'stop')}>■ Stop</button><button onClick={()=>downloadThreatPDF(r)}>Download PDF report</button></div>
+    </div>
+  );
+}
+
+function Home({ go }) {
+  const f = [['scanner','URL Scanner','Checks suspicious website URLs'],['scanner','Phishing Detector','Identifies potential phishing messages'],['password','Password Strength Checker','Evaluates password strength'],['scanner','Email Threat Analyzer','Detects suspicious email content'],['ip','IP Lookup','Displays publicly available IP information'],['dashboard','Security Dashboard','Shows security statistics and alerts'],['awareness','Cyber Awareness','Provides cybersecurity tips'],['report','Report Threat','Allows users to report suspicious links']];
+  return (<>
+    <section className="hero"><div>
+      <h1>Check it before you click it.</h1>
+      <p>KRYPTO LENS scans links, messages and emails for threats, and tests how strong your passwords really are.</p>
+      <button className="btn" onClick={() => go('scanner')}>Scan a link</button>
+      <button className="btn alt" onClick={() => go('dashboard')}>Open dashboard</button>
+    </div></section>
+    <main><div className="grid">{f.map(([p, t, d]) =>
+      <div key={t} className="card feat" tabIndex="0" onClick={() => go(p)} onKeyDown={e => e.key === 'Enter' && go(p)}><h3>{t}</h3><p>{d}</p></div>)}</div></main>
+  </>);
+}
+
+function Dashboard() {
+  const [d, setD] = useState(null);
+  useEffect(() => {
+    api('dashboard').then(data => setD(data.error ? { error: data.error } : data));
+  }, []);
+  if (!d) return <main><p>Loading…</p></main>;
+  if (d.error) return <main><p className="err">{d.error}</p></main>;
+  const c = color(100 - d.score);
+  return (<main>
+    <h2>Security dashboard</h2><p className="sub">Your score reflects your last 20 scans.</p>
+    <div className="grid" style={{marginBottom:16}}>
+      {[['Emails analyzed',d.stats.emails||0],['URLs analyzed',d.stats.urls||0],['QR codes analyzed',d.stats.qrs||0],['Safe',d.stats.safe||0],['Suspicious',d.stats.suspicious||0],['Dangerous',d.stats.dangerous||0]].map(([label,value])=><div className="card" key={label}><p>{label}</p><div className="stat">{value}</div></div>)}
+    </div>
+    <div className="two">
+      <div className="card" style={{ textAlign: 'center' }}>
+        <h3>Security score</h3>
+        <div className="ring" style={{ background: `conic-gradient(${c} ${d.score * 3.6}deg,#0a1324 0)` }}><div>{d.score}</div></div>
+        <p>{d.stats.total} scans · {d.stats.threats} dangerous · {d.stats.reports} reports</p>
+      </div>
+      <div className="card"><h3>Recent alerts</h3>
+        {d.alerts.length === 0 && <p>No alerts. Scan a link or message to get started.</p>}
+        {d.alerts.map(a => <div className="alert" key={a._id}><span className={'pill ' + a.verdict}>{a.verdict}</span> <b>{a.type}</b> · {a.input.slice(0, 60)}<br /><small style={{ color: 'var(--muted)' }}>{a.flags[0]} · {ago(a.createdAt)}</small></div>)}
+      </div>
+    </div>
+    <div className="card" style={{ marginTop: 16, overflowX: 'auto' }}><h3>Scan history</h3>
+      {d.history.length === 0 ? <p>No scans yet.</p> :
+      <table><thead><tr><th>Type</th><th>Input</th><th>Result</th><th>Time</th></tr></thead><tbody>
+        {d.history.map(h => <tr key={h._id}><td>{h.type}</td><td className="in">{h.input}</td><td><span className={'pill ' + h.verdict}>{h.verdict}</span></td><td>{ago(h.createdAt)}</td></tr>)}
+      </tbody></table>}
+    </div>
+  </main>);
+}
+
+function Scanner() {
+  const T = { url: ['URL Scanner', 'https://example.com/login', false], phishing: ['Phishing Detector', 'Paste the message text here', true], email: ['Email Threat Analyzer', 'Paste the full email, including From: and Reply-To: lines', true] };
+  const [t, setT] = useState('url'), [v, setV] = useState(''), [r, setR] = useState(null), [busy, setBusy] = useState(false);
+  const run = async () => {
+    if (!v.trim() || busy) return;
+    setBusy(true);
+    setR(null);
+    try {
+      setR(await api('scan/' + t, { data: v.trim() }));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (<main>
+    <h2>Threat scanner</h2><p className="sub">Heuristic analysis plus Google Safe Browsing and VirusTotal when API keys are set.</p>
+    <div className="tabs">{Object.entries(T).map(([k, x]) => <button key={k} className={t === k ? 'on' : ''} onClick={() => { setT(k); setR(null); setV(''); }}>{x[0]}</button>)}</div>
+    <div className="card">
+      {T[t][2] ? <textarea aria-label={T[t][0]} placeholder={T[t][1]} value={v} onChange={e => setV(e.target.value)} />
+        : <input aria-label="URL" placeholder={T[t][1]} value={v} onChange={e => setV(e.target.value)} onKeyDown={e => e.key === 'Enter' && v && run()} />}
+      <button className="btn" disabled={busy || !v.trim()} onClick={run}>{busy ? 'Scanning…' : 'Scan now'}</button>
+      <button className="btn alt" onClick={()=>startVoiceQuestion(setV)}>🎙 Ask by voice</button>
+    </div>
+    <Result r={r} />
+  </main>);
+}
+
+
+function startVoiceQuestion(setValue){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){alert('Speech recognition is not supported in this browser. You can type your question instead.');return;}
+ const rec=new SR(); rec.lang=langLocale[currentLang]||'en-US'; rec.interimResults=false;
+ rec.onresult=e=>setValue(e.results[0][0].transcript);
+ rec.onerror=e=>alert('Microphone/speech recognition issue: '+e.error+'. Check browser permissions or type instead.');
+ rec.start();
+}
+function downloadThreatPDF(r){
+ if(!window.jspdf?.jsPDF){alert('PDF library is unavailable. Check your internet connection and reload.');return;}
+ const doc=new window.jspdf.jsPDF(); let y=18;
+ doc.setFontSize(18);doc.text('KRYPTO LENS - Threat Analysis Report',14,y);y+=12;
+ doc.setFontSize(11);const lines=[
+  `Generated: ${new Date().toLocaleString()}`,`Risk score: ${r.score}/100`,`Risk category: ${r.verdict}`,
+  `QR content type: ${r.qrContentType||'N/A'}`,`Analyzed content: ${(r.extractedContent||'').slice(0,180)}`,
+  'Detection indicators:',...(r.flags||[]).map(x=>'• '+x),
+  'Safety recommendation: Do not open suspicious links. Verify through the official website or app.'
+ ];
+ lines.forEach(line=>{const wrapped=doc.splitTextToSize(line,180);if(y+wrapped.length*6>280){doc.addPage();y=18;}doc.text(wrapped,14,y);y+=wrapped.length*6+2;});
+ doc.save('krypto-lens-threat-report.pdf');
+}
+function QRAnalyzer(){
+ const [result,setResult]=useState(null),[busy,setBusy]=useState(false),[camera,setCamera]=useState(false);
+ const videoRef=React.useRef(null),streamRef=React.useRef(null),timerRef=React.useRef(null);
+ const analyzeQR=async text=>{setBusy(true);try{const r=await api('scan/qr',{data:text});setResult(r);lastScanResult=r;}finally{setBusy(false);}};
+ const decodeFile=e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(!file.type.startsWith('image/')){alert('Please choose an image file.');return;}
+  const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{try{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const pixels=ctx.getImageData(0,0,c.width,c.height);const code=window.jsQR?.(pixels.data,pixels.width,pixels.height);if(code?.data)analyzeQR(code.data);else alert('No QR code found. Try a clearer, well-lit image.');}catch(err){alert('Could not decode this image: '+err.message);}finally{URL.revokeObjectURL(url);}};
+  img.onerror=()=>{URL.revokeObjectURL(url);alert('Invalid or unsupported image.');};img.src=url;e.target.value='';
+ };
+ const startCamera=async()=>{
+  if(!navigator.mediaDevices?.getUserMedia){alert('Camera access is unavailable. Upload a QR image instead.');return;}
+  try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});streamRef.current=s;setCamera(true);await new Promise(resolve=>setTimeout(resolve,150));if(videoRef.current){videoRef.current.srcObject=s;await videoRef.current.play();}timerRef.current=setInterval(()=>{const v=videoRef.current;if(!v||v.readyState<2||busy)return;const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext('2d');x.drawImage(v,0,0);const code=window.jsQR?.(x.getImageData(0,0,c.width,c.height).data,c.width,c.height);if(code?.data){stopCamera();analyzeQR(code.data);}},350);}catch(err){alert('Camera permission or device error: '+err.message+'. You can upload an image instead.');}
+ };
+ const stopCamera=()=>{if(timerRef.current)clearInterval(timerRef.current);streamRef.current?.getTracks().forEach(t=>t.stop());streamRef.current=null;setCamera(false);};
+ React.useEffect(()=>()=>{if(timerRef.current)clearInterval(timerRef.current);streamRef.current?.getTracks().forEach(t=>t.stop());},[]);
+ return <main><h2>QR Code Threat Analyzer</h2><p className="sub">Decode QR content safely. KRYPTO LENS never opens the extracted URL.</p>
+  <div className="card"><h3>Upload a QR image</h3><input type="file" accept="image/*" onChange={decodeFile}/><button className="btn" onClick={startCamera} disabled={camera}>Start camera scan</button>{camera&&<button className="btn alt" onClick={stopCamera}>Stop camera</button>}
+   {camera&&<video ref={videoRef} playsInline muted style={{display:'block',width:'100%',maxWidth:480,marginTop:12,borderRadius:12}}/>}
+   {busy&&<p>Analyzing decoded content…</p>}
+  </div>
+  {result&&!result.error&&<div className="card" style={{marginTop:16}}><span className={'pill '+result.verdict}>{result.verdict}</span><h3>Risk score: {result.score}/100</h3><p>Decoded content type: {result.qrContentType}</p><p style={{overflowWrap:'anywhere'}}>{result.extractedContent}</p><ul className="fl">{(result.flags||[]).map((f,i)=><li key={i}>{f}</li>)}</ul><p><b>Safety:</b> Never open suspicious QR links. Verify the domain independently and avoid entering credentials or OTPs.</p><button className="btn" onClick={()=>downloadThreatPDF(result)}>Download PDF report</button><div className="tabs"><button onClick={()=>speakText(`QR code ${result.qrContentType}. ${result.verdict}. Risk score ${result.score} out of 100. ${(result.flags||[]).join('. ')}. Do not open suspicious links.`)}>▶ Play</button><button onClick={()=>speakText('', 'pause')}>Ⅱ Pause</button><button onClick={()=>speakText('', 'stop')}>■ Stop</button></div></div>}
+  {result?.error&&<p className="err">{result.error}</p>}
+ </main>;
+}
+
+function Password() {
+  const [v, setV] = useState(''), [r, setR] = useState(null), [show, setShow] = useState(false);
+  useEffect(() => {
+    if (!v) { setR(null); return; }
+    let active = true;
+    const id = setTimeout(async () => {
+      const result = await api('scan/password', { data: v });
+      if (active) setR(result);
+    }, 350);
+    return () => { active = false; clearTimeout(id); };
+  }, [v]);
+  return (<main>
+    <h2>Password strength</h2><p className="sub">Checked on your own server. Only the length is saved, never the password.</p>
+    <div className="card">
+      <input aria-label="Password" type={show ? 'text' : 'password'} placeholder="Type a password to test" value={v} onChange={e => setV(e.target.value)} autoComplete="off" />
+      <label><input type="checkbox" style={{ width: 'auto', margin: '0 8px 0 0' }} checked={show} onChange={e => setShow(e.target.checked)} />Show password</label>
+    </div>
+    <Result r={r} strength />
+  </main>);
+}
+
+function IP() {
+  const [v, setV] = useState(''), [r, setR] = useState(null);
+  const run = async () => {
+    const endpoint = v.trim() ? 'ip/' + encodeURIComponent(v.trim()) : 'ip';
+    setR(await api(endpoint));
+  };
+  return (<main>
+    <h2>IP lookup</h2><p className="sub">Leave empty to look up the server's public IP.</p>
+    <div className="card"><input aria-label="IP address" placeholder="8.8.8.8" value={v} onChange={e => setV(e.target.value)} onKeyDown={e => e.key === 'Enter' && run()} />
+      <button className="btn" onClick={run}>Look up</button></div>
+    {r && (r.error ? <p className="err">{r.error}</p> : <div className="card" style={{ marginTop: 16 }}>
+      {Object.entries(r).map(([k, x]) => <div className="kv" key={k}><span>{k}</span><b>{String(x ?? '-')}</b></div>)}</div>)}
+  </main>);
+}
+
+function ReportPage() {
+  const [u, setU] = useState(''), [n, setN] = useState(''), [m, setM] = useState('');
+  const send = async () => { const r = await api('report', { url: u, note: n }); setM(r.ok ? 'Thanks. Your report was saved.' : r.error); if (r.ok) { setU(''); setN(''); } };
+  return (<main>
+    <h2>Report a threat</h2><p className="sub">Tell us about a suspicious link so it can be reviewed.</p>
+    <div className="card"><input aria-label="Suspicious link" placeholder="Suspicious link" value={u} onChange={e => setU(e.target.value)} />
+      <textarea aria-label="What happened" style={{ minHeight: 90 }} placeholder="Where did you find it? What did it ask for?" value={n} onChange={e => setN(e.target.value)} />
+      <button className="btn" disabled={!u.trim()} onClick={send}>Send report</button>
+      {m && <p className={m.startsWith('Thanks') ? 'ok' : 'err'}>{m}</p>}</div>
+  </main>);
+}
+
+function Awareness() {
+  const tips = [['Check the sender','Look at the full email address, not just the display name.'],['Hover before you click','Preview the link destination. If it looks off, do not open it.'],['Never share codes','No real bank or service will ask for your OTP or PIN.'],['Use a password manager','Unique, long passwords for every account.'],['Turn on 2-factor sign-in','An authenticator app beats SMS codes.'],['Slow down on urgent messages','Pressure is the main tool of scammers.'],['Update your devices','Install updates; they fix known security holes.'],['Use trusted Wi-Fi','Avoid banking on public networks without a VPN.']];
+  return (<main><h2>Cyber awareness</h2><p className="sub">Eight habits that stop most attacks.</p>
+    <div className="grid">{tips.map(([a, b]) => <div className="card" key={a}><h3>{a}</h3><p>{b}</p></div>)}</div></main>);
+}
+
+
+function VoiceAssistant(){
+ const [question,setQuestion]=useState(''),[answer,setAnswer]=useState(''),[enabled,setEnabled]=useState(true);
+ const ask=()=>{
+  const q=question.toLowerCase();let a;
+  if(!lastScanResult) a={en:'Run an email, URL or QR scan first. I can then explain its risk indicators.',hi:'पहले ईमेल, URL या QR स्कैन करें। फिर मैं जोखिम के संकेत समझा सकता हूँ।',kn:'ಮೊದಲು ಇಮೇಲ್, URL ಅಥವಾ QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ. ನಂತರ ಅಪಾಯದ ಸೂಚನೆಗಳನ್ನು ವಿವರಿಸುತ್ತೇನೆ.'}[currentLang];
+  else {
+   const r=lastScanResult, reasons=(r.flags||[]).join('. ');
+   a=`${r.verdict}. Risk score ${r.score} out of 100. ${reasons||'No major indicators were detected.'} ${r.verdict==='Safe'?'Stay alert and verify the sender.':'Do not open the link or provide passwords, OTPs or payment details. Verify through the official website or app.'}`;
+   if(currentLang==='hi') a=`${r.verdict==='Safe'?'सुरक्षित':r.verdict==='Suspicious'?'संदिग्ध':'खतरनाक'}। जोखिम स्कोर 100 में से ${r.score}। ${reasons}। संदिग्ध लिंक न खोलें और पासवर्ड या OTP साझा न करें।`;
+   if(currentLang==='kn') a=`${r.verdict==='Safe'?'ಸುರಕ್ಷಿತ':r.verdict==='Suspicious'?'ಸಂದೇಹಾಸ್ಪದ':'ಅಪಾಯಕಾರಿ'}. ಅಪಾಯದ ಅಂಕ 100ರಲ್ಲಿ ${r.score}. ${reasons}. ಅನುಮಾನಾಸ್ಪದ ಲಿಂಕ್ ತೆರೆಯಬೇಡಿ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ OTP ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.`;
+  }
+  setAnswer(a);if(enabled)speakText(a);
+ };
+ return <section className="card" style={{margin:'0 auto 24px',maxWidth:1060}}><h3>AI Voice Guidance</h3><label><input type="checkbox" style={{width:'auto',marginRight:8}} checked={enabled} onChange={e=>setEnabled(e.target.checked)}/>Enable voice assistance</label><input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Ask: Is this email safe? Why is this link suspicious?"/><div className="tabs"><button onClick={()=>startVoiceQuestion(setQuestion)}>🎙 Ask by voice</button><button className="btn" onClick={ask}>Ask / Explain</button><button onClick={()=>speakText(answer)} disabled={!answer}>▶ Play</button><button onClick={()=>speakText('', 'pause')}>Ⅱ Pause</button><button onClick={()=>speakText('', 'stop')}>■ Stop</button></div>{answer&&<p aria-live="polite">{answer}</p>}</section>;
+}
+
+function App() {
+  const [p, setP] = useState(location.hash.slice(1) || 'home');
+  const go = x => { setP(x); location.hash = x; window.scrollTo(0, 0); };
+  const View = { home: <Home go={go} />, dashboard: <Dashboard />, scanner: <Scanner />, qr: <QRAnalyzer />, password: <Password />, ip: <IP />, report: <ReportPage />, awareness: <Awareness /> }[p] || <Home go={go} />;
+  return (<>
+    <nav><span className="logo">KRYPTO LENS</span><label style={{color:'var(--muted)',fontSize:13}}>Language <select aria-label="Language" value={currentLang} onChange={e=>setLanguage(e.target.value)} style={{width:'auto',margin:'0 8px',padding:7,background:'#0a1324',color:'var(--text)',border:'1px solid var(--line)',borderRadius:8}}><option value="en">English</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिन्दी</option></select></label>{PAGES.map(([k, l]) => <button key={k} className={p === k ? 'on' : ''} onClick={() => go(k)}>{l}</button>)}</nav>
+    {View}
+    <VoiceAssistant />
+  </>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+setTimeout(translatePage, 0);
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Node dependencies
+node_modules/
+
+# Runtime data and logs
+cybershield/data/*.json
+cybershield/*.log
+*.log
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
